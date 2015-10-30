@@ -1,0 +1,2 @@
+20/10/15 18:10 Tomas	//Añadido el movimiento de la esfer
+20/10/15 18:29 Pablo	// Añadido el movimiento de las paletas
