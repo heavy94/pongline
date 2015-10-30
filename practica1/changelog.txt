@@ -1,2 +1,3 @@
-20/10/15 18:10 Tomas	//Añadido el movimiento de la esfer
-20/10/15 18:29 Pablo	// Añadido el movimiento de las paletas
+20/10/15 18:10 Tomas	//Añadido el movimiento de la esfera
+20/10/15 18:29 Pablo	//Añadido el movimiento de las paletas
+30/10/15 19:04 Tomas	//Añadida la creación cada cierto tiempo de nuevas esferas más peuqeñas a partir de las existentes
