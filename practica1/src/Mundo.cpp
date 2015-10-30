@@ -14,7 +14,7 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CMundo::CMundo()
+CMundo::CMundo():contador(0),flag(0)
 {
 	Init();
 }
@@ -102,7 +102,8 @@ void CMundo::OnDraw()
 	fondo_dcho.Dibuja();
 	jugador1.Dibuja();
 	jugador2.Dibuja();
-	esfera.Dibuja();
+	for(i=0;i<listaEsferas.size();i++)
+		listaEsferas[i].Dibuja();
 
 	/////////////////
 	///////////
@@ -114,38 +115,86 @@ void CMundo::OnDraw()
 }
 
 void CMundo::OnTimer(int value)
-{	
+{
+	int i, j;
+
 	jugador1.Mueve(0.025f);
 	jugador2.Mueve(0.025f);
-	esfera.Mueve(0.025f);
-	int i;
+	for(i=0;i<listaEsferas.size();i++) 
+		listaEsferas[i].Mueve(0.025f);
 	for(i=0;i<paredes.size();i++)
 	{
-		paredes[i].Rebota(esfera);
+		for(j=0;j<listaEsferas.size();j++)
+			paredes[i].Rebota(listaEsferas[j]);
 		paredes[i].Rebota(jugador1);
 		paredes[i].Rebota(jugador2);
 	}
-
-	jugador1.Rebota(esfera);
-	jugador2.Rebota(esfera);
-	if(fondo_izq.Rebota(esfera))
+	//Interaccion entre las esferas
+	if(flag<=0)
 	{
-		esfera.centro.x=0;
-		esfera.centro.y=rand()/(float)RAND_MAX;
-		esfera.velocidad.x=2+2*rand()/(float)RAND_MAX;
-		esfera.velocidad.y=2+2*rand()/(float)RAND_MAX;
-		puntos2++;
+		for(i=0;i<listaEsferas.size();i++)
+		{
+			for(j=i+1;j<listaEsferas.size();j++)
+			{
+				listaEsferas[i].Rebota(listaEsferas[j]);
+			}
+		}
 	}
+	else
+		flag--;
 
-	if(fondo_dcho.Rebota(esfera))
+	for(i=0;i<listaEsferas.size();i++)
 	{
-		esfera.centro.x=0;
-		esfera.centro.y=rand()/(float)RAND_MAX;
-		esfera.velocidad.x=-2-2*rand()/(float)RAND_MAX;
-		esfera.velocidad.y=-2-2*rand()/(float)RAND_MAX;
-		puntos1++;
-	}
+		jugador1.Rebota(listaEsferas[i]);
+		jugador2.Rebota(listaEsferas[i]);
 
+		if(fondo_izq.Rebota(listaEsferas[i]))
+		{
+			Esfera* nueva_esfera = new Esfera;
+			listaEsferas.clear();
+			listaEsferas.push_back(*nueva_esfera);
+			listaEsferas[0].centro.x=0;
+			listaEsferas[0].centro.y=rand()/(float)RAND_MAX;
+			listaEsferas[0].velocidad.x=2+2*rand()/(float)RAND_MAX;
+			listaEsferas[0].velocidad.y=2+2*rand()/(float)RAND_MAX;
+			contador=0;
+			puntos2++;
+		}
+		if(fondo_dcho.Rebota(listaEsferas[i]))
+		{
+			Esfera* nueva_esfera = new Esfera;
+			listaEsferas.clear();
+			listaEsferas.push_back(*nueva_esfera);
+			listaEsferas[0].centro.x=0;
+			listaEsferas[0].centro.y=rand()/(float)RAND_MAX;
+			listaEsferas[0].velocidad.x=-2-2*rand()/(float)RAND_MAX;
+			listaEsferas[0].velocidad.y=-2-2*rand()/(float)RAND_MAX;
+			contador=0;
+			puntos1++;
+		}
+	}
+	//Añade una nueva esfera
+	if(++contador>=400) //cada 10s
+	{
+		int indice = 0;
+		for(int i=0;i<listaEsferas.size();i++)
+			if(listaEsferas[i].radio > listaEsferas[indice].radio)
+				indice = i;
+		listaEsferas[0].radio*=0.8f;
+//		listaEsferas[0].centro.x+=listaEsferas[0].radio*1.01f;
+//		listaEsferas[0].centro.y+=listaEsferas[0].radio*1.01f;
+
+
+		Esfera* nueva_esfera = new Esfera;
+		listaEsferas.push_back(*nueva_esfera);
+		listaEsferas.back().centro.x=listaEsferas[0].centro.x;/*-listaEsferas[0].radio*2.01f;*/
+		listaEsferas.back().centro.y=listaEsferas[0].centro.y;/*-listaEsferas[0].radio*2.01f;*/
+		listaEsferas.back().radio=listaEsferas[0].radio;
+		listaEsferas.back().velocidad.x=listaEsferas.back().velocidad.x;
+		listaEsferas.back().velocidad.y=-listaEsferas.back().velocidad.y;
+		flag = 40; // 1s
+		contador = 0;
+	}
 }
 
 void CMundo::OnKeyboardDown(unsigned char key, int x, int y)
@@ -154,16 +203,19 @@ void CMundo::OnKeyboardDown(unsigned char key, int x, int y)
 	{
 //	case 'a':jugador1.velocidad.x=-1;break;
 //	case 'd':jugador1.velocidad.x=1;break;
-	case 's':jugador1.velocidad.y=-4;break;
-	case 'w':jugador1.velocidad.y=4;break;
-	case 'l':jugador2.velocidad.y=-4;break;
-	case 'o':jugador2.velocidad.y=4;break;
+	case 's':jugador1.velocidad.y=-6;break;
+	case 'w':jugador1.velocidad.y=6;break;
+	case 'l':jugador2.velocidad.y=-6;break;
+	case 'o':jugador2.velocidad.y=6;break;
 
 	}
 }
 
 void CMundo::Init()
 {
+	Esfera* nueva_esfera = new Esfera;	
+	listaEsferas.push_back(*nueva_esfera);
+	
 	Plano p;
 //pared inferior
 	p.x1=-7;p.y1=-5;

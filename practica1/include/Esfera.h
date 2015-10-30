@@ -24,6 +24,7 @@ public:
 
 	void Mueve(float t);
 	void Dibuja();
+	bool Rebota(Esfera &e);
 };
 
 #endif // !defined(AFX_ESFERA_H__8D520BAF_8208_423B_BD91_29F6687FB9C3__INCLUDED_)

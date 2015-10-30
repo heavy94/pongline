@@ -27,7 +27,7 @@ public:
 	void OnTimer(int value);
 	void OnDraw();	
 
-	Esfera esfera;
+	std::vector<Esfera> listaEsferas;
 	std::vector<Plano> paredes;
 	Plano fondo_izq;
 	Plano fondo_dcho;
@@ -36,6 +36,8 @@ public:
 
 	int puntos1;
 	int puntos2;
+	int contador;
+	int flag; //Inhabilita la interaccion entre esferas durante un tiempo cuando se crea una nueva
 };
 
 #endif // !defined(AFX_MUNDO_H__9510340A_3D75_485F_93DC_302A43B8039A__INCLUDED_)
