@@ -38,6 +38,9 @@ public:
 	int puntos2;
 	int contador;
 	int flag; //Inhabilita la interaccion entre esferas durante un tiempo cuando se crea una nueva
+
+	//char tuberia[]="/tmp/logger.txt";
+	int fd_fifo;
 };
 
 #endif // !defined(AFX_MUNDO_H__9510340A_3D75_485F_93DC_302A43B8039A__INCLUDED_)

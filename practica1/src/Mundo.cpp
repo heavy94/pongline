@@ -9,6 +9,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -21,7 +25,7 @@ CMundo::CMundo():contador(0),flag(0)
 
 CMundo::~CMundo()
 {
-
+	close(fd_fifo);
 }
 
 void CMundo::InitGL()
@@ -159,6 +163,11 @@ void CMundo::OnTimer(int value)
 			listaEsferas[0].velocidad.y=2+2*rand()/(float)RAND_MAX;
 			contador=0;
 			puntos2++;
+			char buffer1[] = "Jugador 1 marca 1 punto, lleva un total de ";
+			char buffer2[20];
+			sprintf(buffer2, "%d puntos.", puntos2);
+			strcat(buffer1, buffer2);			
+			write(fd_fifo,buffer1,strlen(buffer1));
 		}
 		if(fondo_dcho.Rebota(listaEsferas[i]))
 		{
@@ -171,6 +180,11 @@ void CMundo::OnTimer(int value)
 			listaEsferas[0].velocidad.y=-2-2*rand()/(float)RAND_MAX;
 			contador=0;
 			puntos1++;
+			char buffer1[] = "Jugador 2 marca 1 punto, lleva un total de ";
+			char buffer2[20];
+			sprintf(buffer2, "%d puntos.", puntos1);
+			strcat(buffer1, buffer2);			
+			write(fd_fifo,buffer1,strlen(buffer1));
 		}
 	}
 	//Añade una nueva esfera
@@ -244,4 +258,6 @@ void CMundo::Init()
 	jugador2.g=0;
 	jugador2.x1=6;jugador2.y1=-1;
 	jugador2.x2=6;jugador2.y2=1;
+
+	fd_fifo = open("logger.txt", O_WRONLY);
 }
