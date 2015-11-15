@@ -12,8 +12,14 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
-#include "Esfera.h"
-#include "Raqueta.h"
+//#include "Esfera.h"
+//#include "Raqueta.h"
+#include "DatosMemCompartida.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 class CMundo  
 {
@@ -37,10 +43,15 @@ public:
 	int puntos1;
 	int puntos2;
 	int contador;
+	int wait_p2; //Cuenta cuanto tiempo lleva el jugador 2 inactivo
 	int flag; //Inhabilita la interaccion entre esferas durante un tiempo cuando se crea una nueva
 
-	//char tuberia[]="/tmp/logger.txt";
+	char *tuberia;
 	int fd_fifo;
+	int fd_fichero;
+    struct stat bstat;
+	DatosMemCompartida *bot1;
+	DatosMemCompartida *bot2;
 };
 
 #endif // !defined(AFX_MUNDO_H__9510340A_3D75_485F_93DC_302A43B8039A__INCLUDED_)

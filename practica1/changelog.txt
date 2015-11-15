@@ -1,3 +1,6 @@
 20/10/15 18:10 Tomas	//Añadido el movimiento de la esfera
 20/10/15 18:29 Pablo	//Añadido el movimiento de las paletas
 30/10/15 19:04 Tomas	//Añadida la creación cada cierto tiempo de nuevas esferas más peuqeñas a partir de las existentes
+15/11/15 21:27 Tomas	//Funcionalidades añadidas: 
+			//·Programa logger que muestra las puntuaciones de los jugadores después de cada punto marcado
+			//·Programa bot que toma el control de jugador1 y adicionalmente del jugador2 si esta inactivo durante más de 5s 				//El juego finaliza cuando uno de los jugadores consigue tres puntos

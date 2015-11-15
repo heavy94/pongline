@@ -9,22 +9,26 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <fcntl.h>
 
+#define MAX_PUNTOS 3
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CMundo::CMundo():contador(0),flag(0)
+CMundo::CMundo():contador(0),wait_p2(0),flag(0)
 {
+	char tb[] = "/tmp/logger";
+	tuberia = tb;
 	Init();
 }
 
 CMundo::~CMundo()
 {
+	listaEsferas.clear();
+	bot1->esfera.radio = -1;
+	munmap(bot1,bstat.st_size);
+//	munmap(bot2,bstat.st_size/2);
+	write(fd_fifo,"$",1);
 	close(fd_fifo);
 }
 
@@ -163,11 +167,9 @@ void CMundo::OnTimer(int value)
 			listaEsferas[0].velocidad.y=2+2*rand()/(float)RAND_MAX;
 			contador=0;
 			puntos2++;
-			char buffer1[] = "Jugador 1 marca 1 punto, lleva un total de ";
-			char buffer2[20];
-			sprintf(buffer2, "%d puntos.", puntos2);
-			strcat(buffer1, buffer2);			
-			write(fd_fifo,buffer1,strlen(buffer1));
+			char buffer[10];
+			sprintf(buffer, "2 %d", puntos2);			
+			write(fd_fifo,buffer,strlen(buffer));
 		}
 		if(fondo_dcho.Rebota(listaEsferas[i]))
 		{
@@ -180,12 +182,21 @@ void CMundo::OnTimer(int value)
 			listaEsferas[0].velocidad.y=-2-2*rand()/(float)RAND_MAX;
 			contador=0;
 			puntos1++;
-			char buffer1[] = "Jugador 2 marca 1 punto, lleva un total de ";
-			char buffer2[20];
-			sprintf(buffer2, "%d puntos.", puntos1);
-			strcat(buffer1, buffer2);			
-			write(fd_fifo,buffer1,strlen(buffer1));
+			char buffer[10];
+			sprintf(buffer, "1 %d", puntos1);
+			write(fd_fifo,buffer,strlen(buffer));
 		}
+	}
+	//Finaliza el juego cuando uno de los jugadores alcanza MAX_PUNTOS
+	if(puntos1 >= MAX_PUNTOS)
+	{
+		printf("[TENIS] El jugador 1 gano la partida %d a %d\n", puntos1, puntos2);
+		exit(0);
+	}
+	if(puntos2 >= MAX_PUNTOS)
+	{
+		printf("[TENIS] El jugador 2 gano la partida %d a %d\n", puntos2, puntos1);
+		exit(0);
 	}
 	//Añade una nueva esfera
 	if(++contador>=400) //cada 10s
@@ -194,21 +205,58 @@ void CMundo::OnTimer(int value)
 		for(int i=0;i<listaEsferas.size();i++)
 			if(listaEsferas[i].radio > listaEsferas[indice].radio)
 				indice = i;
-		listaEsferas[0].radio*=0.8f;
-//		listaEsferas[0].centro.x+=listaEsferas[0].radio*1.01f;
-//		listaEsferas[0].centro.y+=listaEsferas[0].radio*1.01f;
-
+		listaEsferas[indice].radio*=0.8f;
 
 		Esfera* nueva_esfera = new Esfera;
 		listaEsferas.push_back(*nueva_esfera);
-		listaEsferas.back().centro.x=listaEsferas[0].centro.x;/*-listaEsferas[0].radio*2.01f;*/
-		listaEsferas.back().centro.y=listaEsferas[0].centro.y;/*-listaEsferas[0].radio*2.01f;*/
-		listaEsferas.back().radio=listaEsferas[0].radio;
-		listaEsferas.back().velocidad.x=listaEsferas.back().velocidad.x;
-		listaEsferas.back().velocidad.y=-listaEsferas.back().velocidad.y;
+		listaEsferas.back().centro.x=listaEsferas[indice].centro.x;
+		listaEsferas.back().centro.y=listaEsferas[indice].centro.y;
+		listaEsferas.back().radio=listaEsferas[indice].radio;
+		listaEsferas.back().velocidad.x=listaEsferas[indice].velocidad.x*(rand()/(float)RAND_MAX+0.65f);
+		listaEsferas.back().velocidad.y=-listaEsferas[indice].velocidad.y*(rand()/(float)RAND_MAX+0.65f);
 		flag = 40; // 1s
 		contador = 0;
 	}
+	int index;
+	//Control del jugador1 por parte del bot
+	index = 0;
+	float dist = listaEsferas[0].centro.x - jugador1.x1;
+	for(int i=1;i<listaEsferas.size();i++) {
+		if(dist > listaEsferas[i].centro.x - jugador1.x1) {
+			index = i;
+			dist = listaEsferas[i].centro.x - jugador1.x1;
+		}
+	}
+	bot1->esfera = listaEsferas[index];
+	bot1->raqueta = jugador1;
+	if(bot1->accion == 1)
+		OnKeyboardDown('w', 0, 0);
+	if(bot1->accion == 0)
+		OnKeyboardDown('x', 0, 0);
+	if(bot1->accion == -1)
+		OnKeyboardDown('s', 0, 0);
+	//Control del jugador2 por parte del bot si esta inactivo mas de 5 segundos
+	if(wait_p2>=200) {
+		index = 0;
+		float dist = jugador2.x1 - listaEsferas[0].centro.x;
+		for(int i=1;i<listaEsferas.size();i++) {
+			if(dist > jugador2.x1 - listaEsferas[i].centro.x) {
+				index = i;
+				dist = jugador2.x1 - listaEsferas[i].centro.x;
+			}
+		}
+		bot2->esfera = listaEsferas[index];
+		bot2->raqueta = jugador2;
+		if(bot2->accion == 1)
+			OnKeyboardDown('o', 0, 0);
+		if(bot2->accion == 0)
+			OnKeyboardDown('.', 0, 0);
+		if(bot2->accion == -1)
+			OnKeyboardDown('l', 0, 0);
+		wait_p2=200;
+	}
+	else
+		wait_p2++;
 }
 
 void CMundo::OnKeyboardDown(unsigned char key, int x, int y)
@@ -219,10 +267,12 @@ void CMundo::OnKeyboardDown(unsigned char key, int x, int y)
 //	case 'd':jugador1.velocidad.x=1;break;
 	case 's':jugador1.velocidad.y=-6;break;
 	case 'w':jugador1.velocidad.y=6;break;
-	case 'l':jugador2.velocidad.y=-6;break;
-	case 'o':jugador2.velocidad.y=6;break;
-
+	case 'x':jugador1.velocidad.y=0;break;
+	case 'l':jugador2.velocidad.y=-6;wait_p2=0;break;
+	case '.':jugador2.velocidad.y=0;wait_p2=0;break;
+	case 'o':jugador2.velocidad.y=6;wait_p2=0;break;
 	}
+
 }
 
 void CMundo::Init()
@@ -259,5 +309,36 @@ void CMundo::Init()
 	jugador2.x1=6;jugador2.y1=-1;
 	jugador2.x2=6;jugador2.y2=1;
 
-	fd_fifo = open("logger.txt", O_WRONLY);
+	DatosMemCompartida *aux;
+
+	bot1 = new DatosMemCompartida;
+	bot1->esfera = listaEsferas[0];
+	bot1->raqueta = jugador1;
+	bot1->accion = 0;
+	bot2 = new DatosMemCompartida;
+	bot2->esfera = listaEsferas[0];
+	bot2->raqueta = jugador1;
+	bot2->accion = 0;
+
+	fd_fifo = open(tuberia, O_WRONLY);
+	creat("/tmp/bot", 0777);
+	fd_fichero = open("/tmp/bot", O_RDWR);
+	write(fd_fichero, bot1, sizeof(DatosMemCompartida));
+	write(fd_fichero, bot2, sizeof(DatosMemCompartida));
+	aux = bot1;
+	delete aux;
+	aux = bot2;
+	delete aux;
+	/* Averigua la longitud del fichero */ 
+  	if (fstat(fd_fichero, &bstat)<0) {
+   		perror("Error en fstat del fichero"); close(fd_fichero);
+   		exit(1);
+ 	}
+  	/* Se proyecta el fichero */
+	if((bot1 = (DatosMemCompartida*)mmap(NULL, bstat.st_size, PROT_WRITE | PROT_READ, MAP_SHARED, fd_fichero, 0)) == MAP_FAILED) {
+		printf("Error en la proyeccion del fichero");
+		exit(1);
+	}
+		bot2 = bot1 + 1;
+	close(fd_fichero);
 }

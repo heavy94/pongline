@@ -1,5 +1,5 @@
-#include<stdio.h>
-#include<stdlib.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -7,9 +7,9 @@
 
 
 
-char tuberia[]="logger.txt";
-char buffer[200];
-int n_bytes = 1000;
+char tuberia[]="/tmp/logger";
+char buffer[10];
+int n_bytes = 4;
 
 int main()
 {
@@ -24,8 +24,11 @@ int main()
 	
 	while(1) {
 		bytes_leidos=read(fd_fifo, buffer, n_bytes);
-		printf("%s\n", buffer);
-		if(buffer[0]=='%') break;
+		if(buffer[0]=='$') break;
+		if(bytes_leidos < 4)
+			printf("Jugador %c marca 1 punto, lleva un total de %c puntos.\n", buffer[0],  buffer[2]);
+		else
+			printf("Jugador %c marca 1 punto, lleva un total de %s puntos.\n", buffer[0],  buffer + 2);
 	}
 	close(fd_fifo);
 	unlink(tuberia);
