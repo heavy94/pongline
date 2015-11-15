@@ -1,4 +1,0 @@
-		
-ADD_EXECUTABLE(logger logger.c)
-
-
