@@ -24,7 +24,8 @@ int main()
 	
 	while(1) {
 		bytes_leidos=read(fd_fifo, buffer, n_bytes);
-		if(buffer[0]=='$') break;
+		if(bytes_leidos == 0)	//Salir del bucle cuando no hay datos en la tuberia
+			break;
 		if(bytes_leidos < 4)
 			printf("Jugador %c marca 1 punto, lleva un total de %c puntos.\n", buffer[0],  buffer[2]);
 		else

@@ -10,7 +10,7 @@ int main(){
 	int fd_fichero;
 	DatosMemCompartida *bot1;
 	DatosMemCompartida *bot2;
-    struct stat bstat;
+    	struct stat bstat;
 
 	fd_fichero = open("/tmp/bot", O_RDWR);
 	/* Averigua la longitud del fichero */ 

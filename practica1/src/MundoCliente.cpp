@@ -2,7 +2,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 #include <fstream>
-#include "Mundo.h"
+#include "MundoCliente.h"
 #include "glut.h"
 
 #include <stdlib.h>
@@ -17,8 +17,8 @@
 
 CMundo::CMundo():contador(0),wait_p2(0),flag(0)
 {
-	char tb[] = "/tmp/logger";
-	tuberia = tb;
+	char tb[] = "/tmp/fifo_sc";
+	tuberia_sc = tb;
 	Init();
 }
 
@@ -27,9 +27,6 @@ CMundo::~CMundo()
 	listaEsferas.clear();
 	bot1->esfera.radio = -1;
 	munmap(bot1,bstat.st_size);
-//	munmap(bot2,bstat.st_size/2);
-	write(fd_fifo,"$",1);
-	close(fd_fifo);
 }
 
 void CMundo::InitGL()
@@ -167,9 +164,6 @@ void CMundo::OnTimer(int value)
 			listaEsferas[0].velocidad.y=2+2*rand()/(float)RAND_MAX;
 			contador=0;
 			puntos2++;
-			char buffer[10];
-			sprintf(buffer, "2 %d", puntos2);			
-			write(fd_fifo,buffer,strlen(buffer));
 		}
 		if(fondo_dcho.Rebota(listaEsferas[i]))
 		{
@@ -182,9 +176,6 @@ void CMundo::OnTimer(int value)
 			listaEsferas[0].velocidad.y=-2-2*rand()/(float)RAND_MAX;
 			contador=0;
 			puntos1++;
-			char buffer[10];
-			sprintf(buffer, "1 %d", puntos1);
-			write(fd_fifo,buffer,strlen(buffer));
 		}
 	}
 	//Finaliza el juego cuando uno de los jugadores alcanza MAX_PUNTOS
@@ -309,7 +300,6 @@ void CMundo::Init()
 	jugador2.x1=6;jugador2.y1=-1;
 	jugador2.x2=6;jugador2.y2=1;
 
-	DatosMemCompartida *aux;
 
 	bot1 = new DatosMemCompartida;
 	bot1->esfera = listaEsferas[0];
@@ -320,15 +310,12 @@ void CMundo::Init()
 	bot2->raqueta = jugador1;
 	bot2->accion = 0;
 
-	fd_fifo = open(tuberia, O_WRONLY);
 	creat("/tmp/bot", 0777);
 	fd_fichero = open("/tmp/bot", O_RDWR);
 	write(fd_fichero, bot1, sizeof(DatosMemCompartida));
 	write(fd_fichero, bot2, sizeof(DatosMemCompartida));
-	aux = bot1;
-	delete aux;
-	aux = bot2;
-	delete aux;
+	delete bot1;
+	delete bot2;
 	/* Averigua la longitud del fichero */ 
   	if (fstat(fd_fichero, &bstat)<0) {
    		perror("Error en fstat del fichero"); close(fd_fichero);
@@ -341,4 +328,10 @@ void CMundo::Init()
 	}
 		bot2 = bot1 + 1;
 	close(fd_fichero);
+
+	if(mkfifo(tuberia_sc, 0777)) {
+		printf("Error al crear la tuberia Servidor-Cliente\n");
+		exit(1);
+	}
+	fd_fifo_sc = open(tuberia_sc, O_RDONLY);
 }

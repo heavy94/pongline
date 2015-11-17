@@ -1,5 +1,5 @@
 #include "glut.h"
-#include "Mundo.h"
+#include "MundoCliente.h"
 
 //el unico objeto global
 CMundo mundo;
