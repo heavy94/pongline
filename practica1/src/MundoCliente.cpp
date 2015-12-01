@@ -172,93 +172,7 @@ void CMundo::OnTimer(int value)
 		strcat(lectura,aux);
 		sscanf(buffer,lectura, &jugador1.x1, &jugador1.y1, &jugador1.x2, &jugador1.y2, &jugador2.x1, &jugador2.y1, &jugador2.x2, &jugador2.y2, &puntos1, &puntos2);
 	}
-/*
-	jugador1.Mueve(0.025f);
-	jugador2.Mueve(0.025f);
-	for(i=0;i<listaEsferas.size();i++) 
-		listaEsferas[i].Mueve(0.025f);
-	for(i=0;i<paredes.size();i++)
-	{
-		for(j=0;j<listaEsferas.size();j++)
-			paredes[i].Rebota(listaEsferas[j]);
-		paredes[i].Rebota(jugador1);
-		paredes[i].Rebota(jugador2);
-	}
-	//Interaccion entre las esferas
-	if(flag<=0)
-	{
-		for(i=0;i<listaEsferas.size();i++)
-		{
-			for(j=i+1;j<listaEsferas.size();j++)
-			{
-				listaEsferas[i].Rebota(listaEsferas[j]);
-			}
-		}
-	}
-	else
-		flag--;
 
-	for(i=0;i<listaEsferas.size();i++)
-	{
-		jugador1.Rebota(listaEsferas[i]);
-		jugador2.Rebota(listaEsferas[i]);
-
-		if(fondo_izq.Rebota(listaEsferas[i]))
-		{
-			Esfera* nueva_esfera = new Esfera;
-			listaEsferas.clear();
-			listaEsferas.push_back(*nueva_esfera);
-			listaEsferas[0].centro.x=0;
-			listaEsferas[0].centro.y=rand()/(float)RAND_MAX;
-			listaEsferas[0].velocidad.x=2+2*rand()/(float)RAND_MAX;
-			listaEsferas[0].velocidad.y=2+2*rand()/(float)RAND_MAX;
-			contador=0;
-			puntos2++;
-		}
-		if(fondo_dcho.Rebota(listaEsferas[i]))
-		{
-			Esfera* nueva_esfera = new Esfera;
-			listaEsferas.clear();
-			listaEsferas.push_back(*nueva_esfera);
-			listaEsferas[0].centro.x=0;
-			listaEsferas[0].centro.y=rand()/(float)RAND_MAX;
-			listaEsferas[0].velocidad.x=-2-2*rand()/(float)RAND_MAX;
-			listaEsferas[0].velocidad.y=-2-2*rand()/(float)RAND_MAX;
-			contador=0;
-			puntos1++;
-		}
-	}
-	//Finaliza el juego cuando uno de los jugadores alcanza MAX_PUNTOS
-	if(puntos1 >= MAX_PUNTOS)
-	{
-		printf("[TENIS] El jugador 1 gano la partida %d a %d\n", puntos1, puntos2);
-		exit(0);
-	}
-	if(puntos2 >= MAX_PUNTOS)
-	{
-		printf("[TENIS] El jugador 2 gano la partida %d a %d\n", puntos2, puntos1);
-		exit(0);
-	}
-	//Añade una nueva esfera
-	if(++contador>=400) //cada 10s
-	{
-		int indice = 0;
-		for(int i=0;i<listaEsferas.size();i++)
-			if(listaEsferas[i].radio > listaEsferas[indice].radio)
-				indice = i;
-		listaEsferas[indice].radio*=0.8f;
-
-		Esfera* nueva_esfera = new Esfera;
-		listaEsferas.push_back(*nueva_esfera);
-		listaEsferas.back().centro.x=listaEsferas[indice].centro.x;
-		listaEsferas.back().centro.y=listaEsferas[indice].centro.y;
-		listaEsferas.back().radio=listaEsferas[indice].radio;
-		listaEsferas.back().velocidad.x=listaEsferas[indice].velocidad.x*(rand()/(float)RAND_MAX+0.65f);
-		listaEsferas.back().velocidad.y=-listaEsferas[indice].velocidad.y*(rand()/(float)RAND_MAX+0.65f);
-		flag = 40; // 1s
-		contador = 0;
-	}
-*/
 	int index;
 	//Control del jugador1 por parte del bot
 	index = 0;
@@ -306,12 +220,12 @@ void CMundo::OnKeyboardDown(unsigned char key, int x, int y)
 {
 	switch(key)
 	{
-	case 's':write(fd_fifo_cs,"s",2);break;
-	case 'w':write(fd_fifo_cs,"w",2);break;
-	case 'x':write(fd_fifo_cs,"x",2);break;
-	case 'l':write(fd_fifo_cs,"l",2);wait_p2=0;break;
-	case '.':write(fd_fifo_cs,".",2);wait_p2=0;break;
-	case 'o':write(fd_fifo_cs,"o",2);wait_p2=0;break;
+	case 's':break;
+	case 'w':break;
+	case 'x':break;
+	case 'l':wait_p2=0;break;
+	case '.':wait_p2=0;break;
+	case 'o':wait_p2=0;break;
 	}
 }
 
@@ -377,17 +291,4 @@ void CMundo::Init()
 	}
 		bot2 = bot1 + 1;
 	close(fd_fichero);
-		/*Creacion tuberia Cliente-Servidor*/ 
-	if(mkfifo(tuberia_cs, 0777)) {
-		printf("Error al crear la tuberia Cliente-Servidor\n");
-		exit(1);
-	}
-	/*Creacion tuberia Servidor-Cliente*/ 
-	if(mkfifo(tuberia_sc, 0777)) {
-		printf("Error al crear la tuberia Servidor-Cliente\n");
-		exit(1);
-	}
-	fd_fifo_sc = open(tuberia_sc, O_RDONLY);
-	fd_fifo_cs = open(tuberia_cs, O_WRONLY);
-
 }

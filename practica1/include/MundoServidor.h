@@ -49,12 +49,6 @@ public:
 	//FIFO logger
 	char *tuberia;
 	int fd_fifo;
-	//FIFO servidor-cliente
-	char *tuberia_sc;
-	int fd_fifo_sc;
-	//FIFO cliente-servidor
-	char *tuberia_cs;
-	int fd_fifo_cs;
 	//Identificador de thread
 	pthread_t thread_id;
 	//Señales

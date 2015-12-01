@@ -42,20 +42,12 @@ void tratar_sigusr1(int k){
 CMundo::CMundo():contador(0),wait_p2(0),flag(0)
 {
 	char tb[] = "/tmp/logger";
-	char tb_sc[] = "/tmp/fifo_sc";
-	char tb_cs[] = "/tmp/fifo_cs";
 	tuberia = tb;
-	tuberia_sc = tb_sc;
-	tuberia_cs = tb_cs;
 	Init();
 }
 
 CMundo::~CMundo()
 {
-	/*Cerrar tuberia SC*/
-	close(fd_fifo_sc);
-	/*Cerrar tuberia CS*/
-	close(fd_fifo_cs);
 	listaEsferas.clear();
 	/*Cerrar tuberia logger*/
 	close(fd_fifo);
@@ -246,6 +238,7 @@ void CMundo::OnTimer(int value)
 		flag = 40; // 1s
 		contador = 0;
 	}
+	/*
 	char buffer[300];
 	char aux[300];
 	sprintf(buffer,"%d ", (int)listaEsferas.size());
@@ -256,6 +249,7 @@ void CMundo::OnTimer(int value)
 	sprintf(aux,"%f %f %f %f %f %f %f %f %d %d", jugador1.x1, jugador1.y1, jugador1.x2, jugador1.y2, jugador2.x1, jugador2.y1, jugador2.x2, jugador2.y2, puntos1, puntos2);
 	strcat(buffer,aux);
 	write(fd_fifo_sc,buffer,strlen(buffer));
+	*/
 }
 /*
 void CMundo::OnKeyboardDown(unsigned char key, int x, int y)
@@ -306,8 +300,7 @@ void CMundo::Init()
 	jugador2.x2=6;jugador2.y2=1;
 
 	fd_fifo = open(tuberia, O_WRONLY);
-	fd_fifo_sc = open(tuberia_sc, O_WRONLY);
-	fd_fifo_cs = open(tuberia_cs, O_RDONLY);
+
 	//Creacion hilo teclado
 	pthread_attr_t thread_tipo;
 	pthread_attr_setdetachstate(&thread_tipo, PTHREAD_CREATE_DETACHED);
@@ -322,6 +315,7 @@ void CMundo::Init()
 	manejador.sa_handler = tratar_sigusr1;
 	manejador.sa_flags = 0;
 	sigaction(SIGUSR1, &manejador, NULL);
+	/*Cambiar tratamiento de las señales, ponerlo en el main*/
 }
 
 void CMundo::RecibeComandosJugador()
