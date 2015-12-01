@@ -11,19 +11,30 @@
 #include <math.h>
 
 #define MAX_PUNTOS 3
+
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
 CMundo::CMundo():contador(0),wait_p2(0),flag(0)
 {
-	char tb[] = "/tmp/fifo_sc";
-	tuberia_sc = tb;
+	static char tb_sc[] = "/tmp/fifo_sc";
+	static char tb_cs[] = "/tmp/fifo_cs";
+	tuberia_sc = tb_sc;
+	tuberia_cs = tb_cs;
 	Init();
 }
 
 CMundo::~CMundo()
 {
+	/*Cerrar y destruir la tuberia SC*/
+	close(fd_fifo_sc);
+	unlink(tuberia_sc);
+	/*Cerrar y destruir la tuberia CS*/
+	close(fd_fifo_cs);
+	unlink(tuberia_cs);
+
 	listaEsferas.clear();
 	bot1->esfera.radio = -1;
 	munmap(bot1,bstat.st_size);
@@ -122,7 +133,46 @@ void CMundo::OnDraw()
 void CMundo::OnTimer(int value)
 {
 	int i, j;
+	char buffer[300];
+	char lectura[300];
+	char aux[50];
+	int bytes_leidos;
+	int n_esferas;
 
+	bytes_leidos=read(fd_fifo_sc, buffer, 300);
+	if(bytes_leidos == 0) {	//Salir del bucle cuando no hay datos en la tuberia
+		//printf("Tuberia SC vacia\n");
+		exit(0);
+	}
+	else {
+		sscanf(buffer,"%d ", &n_esferas);
+		sprintf(lectura, "%%*d ");
+		if(n_esferas < listaEsferas.size()){
+			listaEsferas.clear();
+			for(int k = 0; k < n_esferas; k++){
+				Esfera* nueva_esfera = new Esfera;
+				listaEsferas.push_back(*nueva_esfera);
+			}
+		}
+		else if(n_esferas > listaEsferas.size()){
+			Esfera* nueva_esfera = new Esfera;
+			listaEsferas.push_back(*nueva_esfera);
+		}
+		for(int k = 0; k < listaEsferas.size(); k++){
+			sprintf(aux, "%%f %%f %%f ");
+			strcat(lectura,aux);	
+			sscanf(buffer,lectura, &listaEsferas[k].centro.x, &listaEsferas[k].centro.y, &listaEsferas[k].radio);
+			sprintf(lectura, "%%*d ");
+			for(int i = 0; i <= k; i++){
+				sprintf(aux, "%%*f %%*f %%*f ");
+				strcat(lectura,aux);
+			}
+		}
+		sprintf(aux,"%%f %%f %%f %%f %%f %%f %%f %%f %%d %%d");
+		strcat(lectura,aux);
+		sscanf(buffer,lectura, &jugador1.x1, &jugador1.y1, &jugador1.x2, &jugador1.y2, &jugador2.x1, &jugador2.y1, &jugador2.x2, &jugador2.y2, &puntos1, &puntos2);
+	}
+/*
 	jugador1.Mueve(0.025f);
 	jugador2.Mueve(0.025f);
 	for(i=0;i<listaEsferas.size();i++) 
@@ -208,6 +258,7 @@ void CMundo::OnTimer(int value)
 		flag = 40; // 1s
 		contador = 0;
 	}
+*/
 	int index;
 	//Control del jugador1 por parte del bot
 	index = 0;
@@ -248,22 +299,20 @@ void CMundo::OnTimer(int value)
 	}
 	else
 		wait_p2++;
+	
 }
 
 void CMundo::OnKeyboardDown(unsigned char key, int x, int y)
 {
 	switch(key)
 	{
-//	case 'a':jugador1.velocidad.x=-1;break;
-//	case 'd':jugador1.velocidad.x=1;break;
-	case 's':jugador1.velocidad.y=-6;break;
-	case 'w':jugador1.velocidad.y=6;break;
-	case 'x':jugador1.velocidad.y=0;break;
-	case 'l':jugador2.velocidad.y=-6;wait_p2=0;break;
-	case '.':jugador2.velocidad.y=0;wait_p2=0;break;
-	case 'o':jugador2.velocidad.y=6;wait_p2=0;break;
+	case 's':write(fd_fifo_cs,"s",2);break;
+	case 'w':write(fd_fifo_cs,"w",2);break;
+	case 'x':write(fd_fifo_cs,"x",2);break;
+	case 'l':write(fd_fifo_cs,"l",2);wait_p2=0;break;
+	case '.':write(fd_fifo_cs,".",2);wait_p2=0;break;
+	case 'o':write(fd_fifo_cs,"o",2);wait_p2=0;break;
 	}
-
 }
 
 void CMundo::Init()
@@ -328,10 +377,17 @@ void CMundo::Init()
 	}
 		bot2 = bot1 + 1;
 	close(fd_fichero);
-
+		/*Creacion tuberia Cliente-Servidor*/ 
+	if(mkfifo(tuberia_cs, 0777)) {
+		printf("Error al crear la tuberia Cliente-Servidor\n");
+		exit(1);
+	}
+	/*Creacion tuberia Servidor-Cliente*/ 
 	if(mkfifo(tuberia_sc, 0777)) {
 		printf("Error al crear la tuberia Servidor-Cliente\n");
 		exit(1);
 	}
 	fd_fifo_sc = open(tuberia_sc, O_RDONLY);
+	fd_fifo_cs = open(tuberia_cs, O_WRONLY);
+
 }

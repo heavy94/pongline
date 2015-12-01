@@ -11,6 +11,30 @@
 #include <math.h>
 
 #define MAX_PUNTOS 3
+
+void* hilo_comandos(void* d)
+{
+    CMundo* p=(CMundo*) d;
+    p->RecibeComandosJugador();
+}
+//Tratamiento de señales
+void tratamiento(int sig){
+	printf("\nEjecucion abortada por la recepcion de ");
+	switch(sig) {
+		case SIGINT:
+			printf("SIGINT\n"); break;
+		case SIGTERM:
+			printf("SIGTERM\n"); break;
+		case SIGPIPE:
+			printf("SIGPIPE\n");
+	}
+	printf("Valor de terminacion 1\n\n");
+	exit(1);
+}
+void tratar_sigusr1(int k){
+	printf("\n[SIGUSR1] Programa finalizado correctamente con valor 0\n\n");
+	exit(0);
+}
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -18,13 +42,22 @@
 CMundo::CMundo():contador(0),wait_p2(0),flag(0)
 {
 	char tb[] = "/tmp/logger";
+	char tb_sc[] = "/tmp/fifo_sc";
+	char tb_cs[] = "/tmp/fifo_cs";
 	tuberia = tb;
+	tuberia_sc = tb_sc;
+	tuberia_cs = tb_cs;
 	Init();
 }
 
 CMundo::~CMundo()
 {
+	/*Cerrar tuberia SC*/
+	close(fd_fifo_sc);
+	/*Cerrar tuberia CS*/
+	close(fd_fifo_cs);
 	listaEsferas.clear();
+	/*Cerrar tuberia logger*/
 	close(fd_fifo);
 }
 
@@ -213,14 +246,22 @@ void CMundo::OnTimer(int value)
 		flag = 40; // 1s
 		contador = 0;
 	}
+	char buffer[300];
+	char aux[300];
+	sprintf(buffer,"%d ", (int)listaEsferas.size());
+	for(int k = 0; k < listaEsferas.size(); k++) {
+		sprintf(aux,"%f %f %f ", listaEsferas[k].centro.x, listaEsferas[k].centro.y, listaEsferas[k].radio);
+		strcat(buffer,aux);
+	}
+	sprintf(aux,"%f %f %f %f %f %f %f %f %d %d", jugador1.x1, jugador1.y1, jugador1.x2, jugador1.y2, jugador2.x1, jugador2.y1, jugador2.x2, jugador2.y2, puntos1, puntos2);
+	strcat(buffer,aux);
+	write(fd_fifo_sc,buffer,strlen(buffer));
 }
-
+/*
 void CMundo::OnKeyboardDown(unsigned char key, int x, int y)
 {
 	switch(key)
 	{
-//	case 'a':jugador1.velocidad.x=-1;break;
-//	case 'd':jugador1.velocidad.x=1;break;
 	case 's':jugador1.velocidad.y=-6;break;
 	case 'w':jugador1.velocidad.y=6;break;
 	case 'x':jugador1.velocidad.y=0;break;
@@ -228,21 +269,20 @@ void CMundo::OnKeyboardDown(unsigned char key, int x, int y)
 	case '.':jugador2.velocidad.y=0;break;
 	case 'o':jugador2.velocidad.y=6;break;
 	}
-
 }
-
+*/
 void CMundo::Init()
 {
 	Esfera* nueva_esfera = new Esfera;	
 	listaEsferas.push_back(*nueva_esfera);
 	
 	Plano p;
-//pared inferior
+	//pared inferior
 	p.x1=-7;p.y1=-5;
 	p.x2=7;p.y2=-5;
 	paredes.push_back(p);
 
-//superior
+	//superior
 	p.x1=-7;p.y1=5;
 	p.x2=7;p.y2=5;
 	paredes.push_back(p);
@@ -266,4 +306,43 @@ void CMundo::Init()
 	jugador2.x2=6;jugador2.y2=1;
 
 	fd_fifo = open(tuberia, O_WRONLY);
+	fd_fifo_sc = open(tuberia_sc, O_WRONLY);
+	fd_fifo_cs = open(tuberia_cs, O_RDONLY);
+	//Creacion hilo teclado
+	pthread_attr_t thread_tipo;
+	pthread_attr_setdetachstate(&thread_tipo, PTHREAD_CREATE_DETACHED);
+	pthread_create(&thread_id, NULL, hilo_comandos, this);
+	//Inicializacion señales
+	manejador.sa_handler = tratamiento;
+	manejador.sa_flags = 0;
+	sigaction(SIGINT, &manejador, NULL);
+	sigaction(SIGTERM, &manejador, NULL);
+	sigaction(SIGPIPE, &manejador, NULL);
+
+	manejador.sa_handler = tratar_sigusr1;
+	manejador.sa_flags = 0;
+	sigaction(SIGUSR1, &manejador, NULL);
+}
+
+void CMundo::RecibeComandosJugador()
+{
+	int bytes_leidos;
+	while (1) {
+		usleep(10);
+		char cad[10];
+		bytes_leidos=read(fd_fifo_cs, cad, sizeof(char));
+		if(bytes_leidos == 0) 	//Salir del bucle cuando no hay datos en la tuberia
+		//	printf("Tuberia CS vacia\n");
+			pthread_exit(0);
+		else {
+			unsigned char key;
+			sscanf(cad,"%c",&key);
+			if(key=='s')jugador1.velocidad.y=-6;
+			if(key=='w')jugador1.velocidad.y=6;
+			if(key=='x')jugador1.velocidad.y=0;
+			if(key=='l')jugador2.velocidad.y=-6;
+			if(key=='o')jugador2.velocidad.y=6;
+			if(key=='.')jugador2.velocidad.y=0;
+		}
+	}
 }

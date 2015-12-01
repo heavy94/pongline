@@ -1,6 +1,14 @@
-20/10/15 18:10 Tomas	//Añadido el movimiento de la esfera
-20/10/15 18:29 Pablo	//Añadido el movimiento de las paletas
-30/10/15 19:04 Tomas	//Añadida la creación cada cierto tiempo de nuevas esferas más peuqeñas a partir de las existentes
+20/10/15 18:10 Tomas	//Añadido el movimiento de la esfera.
+
+20/10/15 18:29 Pablo	//Añadido el movimiento de las paletas.
+
+30/10/15 19:04 Tomas	//Añadida la creación cada cierto tiempo de nuevas esferas más peuqeñas a partir de las existentes.
+
 15/11/15 21:27 Tomas	//Funcionalidades añadidas: 
-			//·Programa logger que muestra las puntuaciones de los jugadores después de cada punto marcado
-			//·Programa bot que toma el control de jugador1 y adicionalmente del jugador2 si esta inactivo durante más de 5s 				//El juego finaliza cuando uno de los jugadores consigue tres puntos
+			//·Programa logger que muestra las puntuaciones de los jugadores después de cada punto marcado.
+			//·Programa bot que toma el control de jugador1 y adicionalmente del jugador2 si esta inactivo durante más de 5s. 				//El juego finaliza cuando uno de los jugadores consigue tres puntos.
+
+01/12/15 16:15 Tomas	//Separación de la aplicación en dos programas: cliente y servidor.
+			//·Cliente se encarga de leer el teclado y gestionar el bot y enviar la información a servidor mediante una FIFO.
+			//·Servidor se encarga de la logica del juego y de actualizar el logger, ademas envia los datos de los objetos al 				   cliente mediante una FIFO. La lectura del cliente se implementa en un thread aparte.
+			//Añadido el tratamiento de las señales: SIGINT, SIGTERM, SIGPIPE, SIGUSR1.

@@ -12,8 +12,6 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
-//#include "Esfera.h"
-//#include "Raqueta.h"
 #include "DatosMemCompartida.h"
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -54,6 +52,9 @@ public:
 	//FIFO servidor-cliente
 	char *tuberia_sc;
 	int fd_fifo_sc;
+	//FIFO cliente-servidor
+	char *tuberia_cs;
+	int fd_fifo_cs;
 };
 
 #endif // !defined(AFX_MUNDO_H__9510340A_3D75_485F_93DC_302A43B8039A__INCLUDED_)

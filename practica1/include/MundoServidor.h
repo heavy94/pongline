@@ -18,6 +18,8 @@
 #include <sys/mman.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <pthread.h>
+#include <signal.h>
 
 class CMundo  
 {
@@ -27,9 +29,10 @@ public:
 	virtual ~CMundo();	
 	
 	void InitGL();	
-	void OnKeyboardDown(unsigned char key, int x, int y);
+//	void OnKeyboardDown(unsigned char key, int x, int y);
 	void OnTimer(int value);
-	void OnDraw();	
+	void OnDraw();
+	void RecibeComandosJugador();	
 
 	std::vector<Esfera> listaEsferas;
 	std::vector<Plano> paredes;
@@ -43,9 +46,19 @@ public:
 	int contador;
 	int wait_p2; //Cuenta cuanto tiempo lleva el jugador 2 inactivo
 	int flag; //Inhabilita la interaccion entre esferas durante un tiempo cuando se crea una nueva
-
+	//FIFO logger
 	char *tuberia;
 	int fd_fifo;
+	//FIFO servidor-cliente
+	char *tuberia_sc;
+	int fd_fifo_sc;
+	//FIFO cliente-servidor
+	char *tuberia_cs;
+	int fd_fifo_cs;
+	//Identificador de thread
+	pthread_t thread_id;
+	//Señales
+	struct sigaction manejador;
 };
 
 #endif // !defined(AFX_MUNDO_H__9510340A_3D75_485F_93DC_302A43B8039A__INCLUDED_)

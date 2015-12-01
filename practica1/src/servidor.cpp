@@ -18,7 +18,7 @@ int main(int argc,char* argv[])
 	glutInit(&argc, argv);
 	glutInitWindowSize(800,600);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-	glutCreateWindow("Mundo");
+	glutCreateWindow("Servidor");
 
 
 	//Registrar los callbacks
@@ -50,6 +50,6 @@ void OnTimer(int value)
 }
 void OnKeyboardDown(unsigned char key, int x, int y)
 {
-	mundo.OnKeyboardDown(key,x,y);
+	//mundo.OnKeyboardDown(key,x,y);
 	glutPostRedisplay();
 }
