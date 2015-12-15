@@ -292,7 +292,10 @@ void CMundo::Init()
 	}
 
 	//Creacion de sockets
-	conexion.InitServer("127.0.0.1",2000);
+	char user_ip[20];
+	printf("Introduzca su IP: ");
+	scanf("%s", user_ip);
+	conexion.InitServer(user_ip,2000);
 	comunicacion = conexion.Accept();
 	char nombre[20] = "\0";
 	int r=comunicacion.Receive(nombre,20);

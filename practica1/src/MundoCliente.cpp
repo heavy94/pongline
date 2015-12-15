@@ -294,6 +294,9 @@ void CMundo::Init()
 	char mensaje[20];
 	printf("Introduzca nombre: ");
 	scanf("%s", mensaje);
-	comunicacion.Connect("127.0.0.1",2000);
+	char user_id[20];
+	printf("Introduzca la IP del servidor: ");
+	scanf("%s", user_id);
+	comunicacion.Connect(user_id,2000);
 	comunicacion.Send(mensaje,strlen(mensaje));
 }
