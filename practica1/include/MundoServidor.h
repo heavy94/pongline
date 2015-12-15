@@ -19,7 +19,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <pthread.h>
-#include <signal.h>
+#include "Socket.h"
 
 class CMundo  
 {
@@ -51,8 +51,9 @@ public:
 	int fd_fifo;
 	//Identificador de thread
 	pthread_t thread_id;
-	//Señales
-	struct sigaction manejador;
+	//Sockets
+	Socket conexion;
+	Socket comunicacion;
 };
 
 #endif // !defined(AFX_MUNDO_H__9510340A_3D75_485F_93DC_302A43B8039A__INCLUDED_)

@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <signal.h>
 
 #define MAX_PUNTOS 3
 
@@ -19,25 +20,20 @@
 
 CMundo::CMundo():contador(0),wait_p2(0),flag(0)
 {
-	static char tb_sc[] = "/tmp/fifo_sc";
-	static char tb_cs[] = "/tmp/fifo_cs";
-	tuberia_sc = tb_sc;
-	tuberia_cs = tb_cs;
 	Init();
 }
 
 CMundo::~CMundo()
 {
-	/*Cerrar y destruir la tuberia SC*/
-	close(fd_fifo_sc);
-	unlink(tuberia_sc);
-	/*Cerrar y destruir la tuberia CS*/
-	close(fd_fifo_cs);
-	unlink(tuberia_cs);
-
 	listaEsferas.clear();
 	bot1->esfera.radio = -1;
 	munmap(bot1,bstat.st_size);
+
+	//Cerrar Socket
+	comunicacion.Close();
+
+	//Cerrar programa servidor
+	execlp("pkill","pkill","-SIGUSR1","servidor",NULL);
 }
 
 void CMundo::InitGL()
@@ -139,12 +135,15 @@ void CMundo::OnTimer(int value)
 	int bytes_leidos;
 	int n_esferas;
 
-	bytes_leidos=read(fd_fifo_sc, buffer, 300);
-	if(bytes_leidos == 0) {	//Salir del bucle cuando no hay datos en la tuberia
-		//printf("Tuberia SC vacia\n");
+	bytes_leidos = comunicacion.Receive(buffer, 300);
+	if(bytes_leidos <= 0) {	
 		exit(0);
 	}
 	else {
+		if(strcmp(buffer,"end")==0){
+			exit(0);
+		}
+
 		sscanf(buffer,"%d ", &n_esferas);
 		sprintf(lectura, "%%*d ");
 		if(n_esferas < listaEsferas.size()){
@@ -220,12 +219,12 @@ void CMundo::OnKeyboardDown(unsigned char key, int x, int y)
 {
 	switch(key)
 	{
-	case 's':break;
-	case 'w':break;
-	case 'x':break;
-	case 'l':wait_p2=0;break;
-	case '.':wait_p2=0;break;
-	case 'o':wait_p2=0;break;
+	case 's':comunicacion.Send("s",2);break;
+	case 'w':comunicacion.Send("w",2);break;
+	case 'x':comunicacion.Send("x",2);break;
+	case 'l':comunicacion.Send("l",2);wait_p2=0;break;
+	case '.':comunicacion.Send(".",2);wait_p2=0;break;
+	case 'o':comunicacion.Send("o",2);wait_p2=0;break;
 	}
 }
 
@@ -291,4 +290,10 @@ void CMundo::Init()
 	}
 		bot2 = bot1 + 1;
 	close(fd_fichero);
+	//Crecion Socket
+	char mensaje[20];
+	printf("Introduzca nombre: ");
+	scanf("%s", mensaje);
+	comunicacion.Connect("127.0.0.1",2000);
+	comunicacion.Send(mensaje,strlen(mensaje));
 }

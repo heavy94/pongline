@@ -17,24 +17,6 @@ void* hilo_comandos(void* d)
     CMundo* p=(CMundo*) d;
     p->RecibeComandosJugador();
 }
-//Tratamiento de señales
-void tratamiento(int sig){
-	printf("\nEjecucion abortada por la recepcion de ");
-	switch(sig) {
-		case SIGINT:
-			printf("SIGINT\n"); break;
-		case SIGTERM:
-			printf("SIGTERM\n"); break;
-		case SIGPIPE:
-			printf("SIGPIPE\n");
-	}
-	printf("Valor de terminacion 1\n\n");
-	exit(1);
-}
-void tratar_sigusr1(int k){
-	printf("\n[SIGUSR1] Programa finalizado correctamente con valor 0\n\n");
-	exit(0);
-}
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -51,6 +33,9 @@ CMundo::~CMundo()
 	listaEsferas.clear();
 	/*Cerrar tuberia logger*/
 	close(fd_fifo);
+	//Cerrar Sockets
+	conexion.Close();
+	comunicacion.Close();
 }
 
 void CMundo::InitGL()
@@ -212,11 +197,13 @@ void CMundo::OnTimer(int value)
 	if(puntos1 >= MAX_PUNTOS)
 	{
 		printf("[TENIS] El jugador 1 gano la partida %d a %d\n", puntos1, puntos2);
+		comunicacion.Send("end",4);
 		exit(0);
 	}
 	if(puntos2 >= MAX_PUNTOS)
 	{
 		printf("[TENIS] El jugador 2 gano la partida %d a %d\n", puntos2, puntos1);
+		comunicacion.Send("end",4);
 		exit(0);
 	}
 	//Añade una nueva esfera
@@ -238,7 +225,7 @@ void CMundo::OnTimer(int value)
 		flag = 40; // 1s
 		contador = 0;
 	}
-	/*
+	
 	char buffer[300];
 	char aux[300];
 	sprintf(buffer,"%d ", (int)listaEsferas.size());
@@ -248,8 +235,8 @@ void CMundo::OnTimer(int value)
 	}
 	sprintf(aux,"%f %f %f %f %f %f %f %f %d %d", jugador1.x1, jugador1.y1, jugador1.x2, jugador1.y2, jugador2.x1, jugador2.y1, jugador2.x2, jugador2.y2, puntos1, puntos2);
 	strcat(buffer,aux);
-	write(fd_fifo_sc,buffer,strlen(buffer));
-	*/
+	//write(fd_fifo_sc,buffer,strlen(buffer));
+	comunicacion.Send(buffer,strlen(buffer));
 }
 /*
 void CMundo::OnKeyboardDown(unsigned char key, int x, int y)
@@ -299,23 +286,22 @@ void CMundo::Init()
 	jugador2.x1=6;jugador2.y1=-1;
 	jugador2.x2=6;jugador2.y2=1;
 
-	fd_fifo = open(tuberia, O_WRONLY);
+	if((fd_fifo = open(tuberia, O_WRONLY)) == -1) {
+		printf("Error al abrir tuberia. Iniciar primero el logger\n");
+		exit(1);
+	}
+
+	//Creacion de sockets
+	conexion.InitServer("127.0.0.1",2000);
+	comunicacion = conexion.Accept();
+	char nombre[20] = "\0";
+	int r=comunicacion.Receive(nombre,20);
+	printf("Nombre del cliente: %s\n", nombre);
 
 	//Creacion hilo teclado
 	pthread_attr_t thread_tipo;
 	pthread_attr_setdetachstate(&thread_tipo, PTHREAD_CREATE_DETACHED);
 	pthread_create(&thread_id, NULL, hilo_comandos, this);
-	//Inicializacion señales
-	manejador.sa_handler = tratamiento;
-	manejador.sa_flags = 0;
-	sigaction(SIGINT, &manejador, NULL);
-	sigaction(SIGTERM, &manejador, NULL);
-	sigaction(SIGPIPE, &manejador, NULL);
-
-	manejador.sa_handler = tratar_sigusr1;
-	manejador.sa_flags = 0;
-	sigaction(SIGUSR1, &manejador, NULL);
-	/*Cambiar tratamiento de las señales, ponerlo en el main*/
 }
 
 void CMundo::RecibeComandosJugador()
@@ -324,7 +310,7 @@ void CMundo::RecibeComandosJugador()
 	while (1) {
 		usleep(10);
 		char cad[10];
-		bytes_leidos=read(fd_fifo_cs, cad, sizeof(char));
+		bytes_leidos = comunicacion.Receive(cad, sizeof(char));
 		if(bytes_leidos == 0) 	//Salir del bucle cuando no hay datos en la tuberia
 		//	printf("Tuberia CS vacia\n");
 			pthread_exit(0);

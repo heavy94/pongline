@@ -5,7 +5,8 @@ SET(COMMON_SRCS
 	Esfera.cpp
 	Plano.cpp
 	Raqueta.cpp
-	Vector2D.cpp)
+	Vector2D.cpp
+	Socket.cpp)
 				
 ADD_EXECUTABLE(cliente cliente.cpp MundoCliente.cpp ${COMMON_SRCS})
 TARGET_LINK_LIBRARIES(cliente glut GL GLU)

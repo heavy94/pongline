@@ -111,6 +111,7 @@ int Socket::Receive(char cad[],int length)
 	if(sock==INVALID_SOCKET)
 		return -1;
 	int r=recv(sock,cad,length,0);
+	
 	if(r==SOCKET_ERROR || r==0)
 	{	
 		std::cout<<"Receive bytes Error"<<std::endl;

@@ -18,6 +18,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include "Socket.h"
 
 class CMundo  
 {
@@ -48,6 +49,9 @@ public:
     	struct stat bstat;
 	DatosMemCompartida *bot1;
 	DatosMemCompartida *bot2;
+
+	//Sockets
+	Socket comunicacion;
 };
 
 #endif // !defined(AFX_MUNDO_H__9510340A_3D75_485F_93DC_302A43B8039A__INCLUDED_)
