@@ -12,12 +12,16 @@
 
 #define MAX_PUNTOS 20
 
-void* hilo_comandos(void* d)
+void* hilo_comandos_1(void* d)
 {
     CMundo* p=(CMundo*) d;
-    p->RecibeComandosJugador();
+    p->RecibeComandosJugador1();
 }
-
+void* hilo_comandos_2(void* d)
+{
+    CMundo* p=(CMundo*) d;
+    p->RecibeComandosJugador2();
+}
 void* hilo_conexiones(void* d)
 {
     CMundo* p=(CMundo*) d;
@@ -315,12 +319,40 @@ void CMundo::Init()
 
 
 	//Creacion hilo teclado
-	pthread_attr_t thread_tipo;
-	pthread_attr_setdetachstate(&thread_tipo, PTHREAD_CREATE_DETACHED);
-	pthread_create(&thread_id, NULL, hilo_comandos, this);
+	//pthread_attr_t thread_tipo;
+	//pthread_attr_setdetachstate(&thread_tipo, PTHREAD_CREATE_DETACHED);
+	pthread_create(&thread_id, NULL, hilo_comandos_1, this);
+	pthread_create(&thread_id, NULL, hilo_comandos_2, this);
 }
 
-void CMundo::RecibeComandosJugador()
+void CMundo::RecibeComandosJugador1()
+{
+	int n1, n2;
+	while (1) {
+		usleep(10);
+		char p1[10];
+		char p2[10];
+		if(conexiones.size() >= 1)
+			n1 = conexiones[0].Receive(p1, sizeof(char));
+		if(conexiones.size() >= 2)
+			n2 = conexiones[1].Receive(p2, sizeof(char));
+		if(false) 	//Salir del bucle cuando no hay datos en la tuberia
+		//	printf("Tuberia CS vacia\n");
+			pthread_exit(0);	
+		else {
+			unsigned char key1, key2;
+			sscanf(p1,"%c",&key1);
+			sscanf(p2,"%c",&key2);
+			if(key1=='s')jugador1.velocidad.y=-6;
+			if(key1=='w')jugador1.velocidad.y=6;
+			if(key1=='x')jugador1.velocidad.y=0;
+			if(key2=='l')jugador2.velocidad.y=-6;
+			if(key2=='o')jugador2.velocidad.y=6;
+			if(key2=='.')jugador2.velocidad.y=0;
+		}
+	}
+}
+void CMundo::RecibeComandosJugador2()
 {
 	int n1, n2;
 	while (1) {

@@ -32,7 +32,8 @@ public:
 //	void OnKeyboardDown(unsigned char key, int x, int y);
 	void OnTimer(int value);
 	void OnDraw();
-	void RecibeComandosJugador();	
+	void RecibeComandosJugador1();
+	void RecibeComandosJugador2();	
 
 	std::vector<Esfera> listaEsferas;
 	std::vector<Plano> paredes;
