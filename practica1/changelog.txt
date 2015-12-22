@@ -15,3 +15,11 @@
 
 15/12/15 16:24 Tomas	//Implemetación de la comunicación entre programas mediante el uso de Sockets.
 			//Funcionalidad añadida que cierra el servidor si se cierra el cliente.
+
+22/12/15 22:11 Tomas	//VERSIÓN FINAL "Tenis distribuido"
+			//El servidor gestiona las conexiones de los diversos clientes, siendo los dos primeros los que efectivamente controlan
+			  las raquetas. Si uno de los clientes que se encuentran jugando se desconecta el primer cliente observador pasara a 				  jugar una nueva partida.
+			//Los distintos hilos finalizan de forma ordenada y el servidor ejecuta un join() sobre ellos.
+			//Se elimina el bot y todas las funcionalidades asociadas a él.
+			//Orden de ejecución: logger -> servidor	Luego se van añadiendo los clientes.
+			  Es necesario que todos los programas empleen la misma IP.
