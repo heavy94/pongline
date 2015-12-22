@@ -23,6 +23,7 @@
 
 class CMundo  
 {
+	int acabar;
 public:
 	void Init();
 	CMundo();
@@ -51,7 +52,8 @@ public:
 	char *tuberia;
 	int fd_fifo;
 	//Identificador de thread
-	pthread_t thread_id;
+	pthread_t thread_jugador1;
+	pthread_t thread_jugador2;
 	pthread_t thread_server;
 	//Sockets
 	Socket servidor;

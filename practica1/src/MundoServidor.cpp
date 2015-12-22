@@ -10,7 +10,7 @@
 #include <string.h>
 #include <math.h>
 
-#define MAX_PUNTOS 20
+#define MAX_PUNTOS 5
 
 void* hilo_comandos_1(void* d)
 {
@@ -31,7 +31,7 @@ void* hilo_conexiones(void* d)
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CMundo::CMundo():contador(0),wait_p2(0),flag(0)
+CMundo::CMundo():acabar(0),contador(0),wait_p2(0),flag(0)
 {
 	char tb[] = "/tmp/logger";
 	tuberia = tb;
@@ -43,6 +43,11 @@ CMundo::~CMundo()
 	listaEsferas.clear();
 	/*Cerrar tuberia logger*/
 	close(fd_fifo);
+	//Cerrar hilos
+	acabar = 1;
+	pthread_join(thread_jugador1,NULL);
+	pthread_join(thread_jugador2,NULL);
+	pthread_join(thread_server,NULL);
 	//Cerrar Sockets
 	servidor.Close();
 	//comunicacion.Close();
@@ -247,30 +252,16 @@ void CMundo::OnTimer(int value)
 	}
 	sprintf(aux,"%f %f %f %f %f %f %f %f %d %d", jugador1.x1, jugador1.y1, jugador1.x2, jugador1.y2, jugador2.x1, jugador2.y1, jugador2.x2, jugador2.y2, puntos1, puntos2);
 	strcat(buffer,aux);
-	//comunicacion.Send(buffer,strlen(buffer));
 
 	for (int i = conexiones.size() - 1; i >= 0; i--) {
 		if (conexiones[i].Send(buffer,300) <= 0) {
 			conexiones.erase(conexiones.begin()+i);
-			//if (i < 2) // Hay menos de dos clientes conectados
-			// Se resetean los puntos a cero
+			printf("Cliente desconectado. Quedan: %d clientes\n\n", conexiones.size());
+			if (i < 2) puntos1 = puntos2 = 0; //Si se desconecta uno de los clientes que estan jugando el marcador se reinicia
 		}
 	}
 }
-/*
-void CMundo::OnKeyboardDown(unsigned char key, int x, int y)
-{
-	switch(key)
-	{
-	case 's':jugador1.velocidad.y=-6;break;
-	case 'w':jugador1.velocidad.y=6;break;
-	case 'x':jugador1.velocidad.y=0;break;
-	case 'l':jugador2.velocidad.y=-6;break;
-	case '.':jugador2.velocidad.y=0;break;
-	case 'o':jugador2.velocidad.y=6;break;
-	}
-}
-*/
+
 void CMundo::Init()
 {
 	Esfera* nueva_esfera = new Esfera;	
@@ -315,82 +306,69 @@ void CMundo::Init()
 	printf("Introduzca su IP: ");
 	scanf("%s", user_ip);
 	servidor.InitServer(user_ip,2000);
+	//Creacion hilo gestor conexiones
 	pthread_create(&thread_server, NULL, hilo_conexiones, this);
-
-
-	//Creacion hilo teclado
-	//pthread_attr_t thread_tipo;
-	//pthread_attr_setdetachstate(&thread_tipo, PTHREAD_CREATE_DETACHED);
-	pthread_create(&thread_id, NULL, hilo_comandos_1, this);
-	pthread_create(&thread_id, NULL, hilo_comandos_2, this);
+	//Creacion hilos teclado
+	pthread_create(&thread_jugador1, NULL, hilo_comandos_1, this);
+	pthread_create(&thread_jugador2, NULL, hilo_comandos_2, this);
 }
 
 void CMundo::RecibeComandosJugador1()
 {
-	int n1, n2;
-	while (1) {
+	int n1;
+	while (!acabar) {
 		usleep(10);
 		char p1[10];
-		char p2[10];
 		if(conexiones.size() >= 1)
 			n1 = conexiones[0].Receive(p1, sizeof(char));
-		if(conexiones.size() >= 2)
-			n2 = conexiones[1].Receive(p2, sizeof(char));
 		if(false) 	//Salir del bucle cuando no hay datos en la tuberia
 		//	printf("Tuberia CS vacia\n");
 			pthread_exit(0);	
 		else {
-			unsigned char key1, key2;
+			unsigned char key1;
 			sscanf(p1,"%c",&key1);
-			sscanf(p2,"%c",&key2);
 			if(key1=='s')jugador1.velocidad.y=-6;
 			if(key1=='w')jugador1.velocidad.y=6;
 			if(key1=='x')jugador1.velocidad.y=0;
-			if(key2=='l')jugador2.velocidad.y=-6;
-			if(key2=='o')jugador2.velocidad.y=6;
-			if(key2=='.')jugador2.velocidad.y=0;
 		}
 	}
+	pthread_exit(0);
 }
 void CMundo::RecibeComandosJugador2()
 {
-	int n1, n2;
-	while (1) {
+	int n2;
+	while (!acabar) {
 		usleep(10);
-		char p1[10];
 		char p2[10];
-		if(conexiones.size() >= 1)
-			n1 = conexiones[0].Receive(p1, sizeof(char));
 		if(conexiones.size() >= 2)
 			n2 = conexiones[1].Receive(p2, sizeof(char));
 		if(false) 	//Salir del bucle cuando no hay datos en la tuberia
 		//	printf("Tuberia CS vacia\n");
 			pthread_exit(0);	
 		else {
-			unsigned char key1, key2;
-			sscanf(p1,"%c",&key1);
+			unsigned char key2;
 			sscanf(p2,"%c",&key2);
-			if(key1=='s')jugador1.velocidad.y=-6;
-			if(key1=='w')jugador1.velocidad.y=6;
-			if(key1=='x')jugador1.velocidad.y=0;
 			if(key2=='l')jugador2.velocidad.y=-6;
 			if(key2=='o')jugador2.velocidad.y=6;
 			if(key2=='.')jugador2.velocidad.y=0;
 		}
 	}
+	pthread_exit(0);
 }
 
 void CMundo::GestionaConexiones()
 {
-	while(1) {
+	while(!acabar) {
 		char nombre[20] = "\0";
-		printf("GC\n");
-		printf("%d\n", conexiones.size());
 		Socket s = servidor.Accept();
 		if(s.getSock()!=INVALID_SOCKET) {
 			conexiones.push_back(s);
 			int r=conexiones.back().Receive(nombre,20);
 			printf("Nuevo cliente: %s\n", nombre);
+			printf("Numero de clientes: %d\n\n", conexiones.size());
+			if (conexiones.size() < 2) puntos1 = puntos2 = 0; /*Si el numero de clientes es menor que 2 el marcador 
+																se reinicia al conectarse un nuevo cliente (jugador)*/
 		}
-	}	
+	}
+	pthread_exit(0);	
 }
