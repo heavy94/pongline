@@ -46,7 +46,7 @@ public:
 	int flag; //Inhabilita la interaccion entre esferas durante un tiempo cuando se crea una nueva
 
 	int fd_fichero;
-    	struct stat bstat;
+    struct stat bstat;
 	DatosMemCompartida *bot1;
 	DatosMemCompartida *bot2;
 

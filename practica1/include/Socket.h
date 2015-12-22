@@ -42,6 +42,8 @@ public:
 	int Send(char cad[],int length);
 	int Receive(char cad[],int length);
 
+	int getSock() {return sock;}
+
 private:
 	int sock;
 

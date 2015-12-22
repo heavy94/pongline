@@ -51,9 +51,11 @@ public:
 	int fd_fifo;
 	//Identificador de thread
 	pthread_t thread_id;
+	pthread_t thread_server;
 	//Sockets
-	Socket conexion;
-	Socket comunicacion;
+	Socket servidor;
+	std::vector<Socket> conexiones;
+	void GestionaConexiones();
 };
 
 #endif // !defined(AFX_MUNDO_H__9510340A_3D75_485F_93DC_302A43B8039A__INCLUDED_)

@@ -33,7 +33,7 @@ CMundo::~CMundo()
 	comunicacion.Close();
 
 	//Cerrar programa servidor
-	execlp("pkill","pkill","-SIGUSR1","servidor",NULL);
+	//execlp("pkill","pkill","-SIGUSR1","servidor",NULL);
 }
 
 void CMundo::InitGL()
@@ -171,7 +171,7 @@ void CMundo::OnTimer(int value)
 		strcat(lectura,aux);
 		sscanf(buffer,lectura, &jugador1.x1, &jugador1.y1, &jugador1.x2, &jugador1.y2, &jugador2.x1, &jugador2.y1, &jugador2.x2, &jugador2.y2, &puntos1, &puntos2);
 	}
-
+	/*
 	int index;
 	//Control del jugador1 por parte del bot
 	index = 0;
@@ -212,7 +212,7 @@ void CMundo::OnTimer(int value)
 	}
 	else
 		wait_p2++;
-	
+	*/
 }
 
 void CMundo::OnKeyboardDown(unsigned char key, int x, int y)
